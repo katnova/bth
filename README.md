@@ -18,7 +18,7 @@ https://www.gnu.org/prep/standards/standards.html
 
 ## VCS
 
-The "source" repo is at git.akat.xyz/bth. For issues, please open them either on codeberg or github. I sign all of my commits with my public gpg key (`3902BCEB8BFD5E8F`).
+The "source" repo is at git.akat.xyz/bth (CI is here as well). For issues, please open them either on codeberg or github. I sign all of my commits with my public gpg key (`3902BCEB8BFD5E8F`).
 
 git.akat.xyz: https://git.akat.xyz/bth
 
@@ -35,7 +35,7 @@ For the love of it.
 I've been using [Atuin](https://github.com/atuinsh/atuin) for years, but it falls
 short in a few areas of personal preference, so I decided to build my own.
 
-The goal is an **easily extensible** (at a code level), **customizable**, ***performant**, and
+The goal is an **easily extensible** (at a code level), **customizable**, **performant**, and
 **well-documented** tool with sane defaults written entirely by hand.
 
 ---
@@ -137,6 +137,8 @@ context - working directory, exit status, and sudo flag - into the SQLite databa
 
 ## Roadmap
 
+The high-level features/items and at which stage they're anticipated to be completed at.
+
 ### Alpha
 
 - [X] PKGBUILD (not pushed to AUR)
@@ -146,10 +148,11 @@ context - working directory, exit status, and sudo flag - into the SQLite databa
 - [X] CatchyOS support
 - [X] ArchLinux support
 - [X] Session tracking (shell-agnostic)
+- [X] Qodana
 - [ ] `bash` support
 - [ ] Bookmarks
 - [ ] Sequences
-- [ ] Qodana
+
 
 ### Beta
 
@@ -169,6 +172,7 @@ context - working directory, exit status, and sudo flag - into the SQLite databa
 - [ ] Configurable storage backend with a decoupled storage layer
 - [ ] Multi-distro support
 - [ ] Cross-platform support (macOS first, Windows later)
+- [ ] Multi-device sync (w/o a central 'server')
 
 ## License
 
