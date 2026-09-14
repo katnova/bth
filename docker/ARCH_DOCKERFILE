@@ -1,0 +1,17 @@
+ARG BTH_VERSION=0.0.85
+
+FROM archlinux:multilib-devel
+
+LABEL name="bth-arch-ci" \
+      version="${BTH_VERSION}" \
+      repository="git.akat.xyz/bth/bth-arch-ci" \
+      description="Pre-configured build env for Arch linux for BTH CI" \
+      org.opencontainers.image.title="bth-arch-ci" \
+      org.opencontainers.image.version="${BTH_VERSION}" \
+      org.opencontainers.image.description="Pre-configured build env for Arch linux for BTH CI" \
+      org.opencontainers.image.source="https://git.akat.xyz/bth" \
+      org.opencontainers.image.ref.name="git.akat.xyz/bth/bth-arch-ci:${BTH_VERSION}"
+
+RUN pacman-key --init </dev/null # init keyring
+RUN pacman -Syu --noconfirm 
+RUN pacman -Sy notcurses sqlite confuse base-devel jdk25-openjdk lld --noconfirm # install deps

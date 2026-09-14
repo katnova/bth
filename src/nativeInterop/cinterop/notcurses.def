@@ -1,0 +1,4 @@
+package = notcurses
+headers = notcurses/direct.h
+compilerOpts.linux = -I/usr/include -D_XOPEN_SOURCE=700
+linkerOpts.linux = -L/usr/lib -L/usr/lib/x86_64-linux-gnu -lnotcurses -lnotcurses-core

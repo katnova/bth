@@ -1,0 +1,187 @@
+version: 52
+jobs:
+- name: gradle ci
+  jobExecutor: docker
+  steps:
+  - type: CheckoutStep
+    name: checkout code
+    cloneCredential:
+      type: DefaultCredential
+    withLfs: false
+    withSubmodules: false
+    condition: SUCCESSFUL
+    optional: false
+  - type: SetupCacheStep
+    name: set up gradle cache
+    key: gradle
+    checksumFiles: '**/build.gradle **/build.gradle.kts'
+    entries:
+    - path: /home/gradle/.gradle/caches
+    - path: /home/gradle/.gradle/jdks
+    - path: /home/gradle/.gradle/native
+    - path: /home/gradle/.gradle/wrapper
+    uploadStrategy: UPLOAD_IF_NOT_EXACT_MATCH
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: detect build version
+    runInContainer: true
+    image: gradle
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        echo "Detecting project version (may require some time while downloading gradle dependencies)..."
+        echo $(gradle properties | grep ^version: | grep -v unspecified | cut -c10-) > buildVersion
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: SetBuildVersionStep
+    name: set build version
+    buildVersion: '@file:buildVersion@'
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: run test
+    runInContainer: true
+    image: git.akat.xyz/bth/bth-arch-ci:latest
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        ./gradlew linuxX64Test
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: PublishJUnitReportStep
+    name: publish unit test report
+    reportName: Unit Test
+    filePatterns: '**/TEST-*.xml'
+    condition: ALWAYS
+    optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    userMatch: anyone
+  - type: PullRequestUpdateTrigger
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 14400
+- name: gradle build
+  jobExecutor: docker
+  steps:
+  - type: CheckoutStep
+    name: checkout code
+    cloneCredential:
+      type: DefaultCredential
+    withLfs: false
+    withSubmodules: false
+    condition: SUCCESSFUL
+    optional: false
+  - type: SetupCacheStep
+    name: set up gradle cache
+    key: gradle
+    checksumFiles: '**/build.gradle **/build.gradle.kts'
+    entries:
+    - path: /home/gradle/.gradle/caches
+    - path: /home/gradle/.gradle/jdks
+    - path: /home/gradle/.gradle/native
+    - path: /home/gradle/.gradle/wrapper
+    uploadStrategy: UPLOAD_IF_NOT_EXACT_MATCH
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: detect build version
+    runInContainer: true
+    image: gradle
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        echo "Detecting project version (may require some time while downloading gradle dependencies)..."
+        echo $(gradle properties | grep ^version: | grep -v unspecified | cut -c10-) > buildVersion
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: SetBuildVersionStep
+    name: set build version
+    buildVersion: '@file:buildVersion@'
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: compileKotlinLinuxX64
+    runInContainer: true
+    image: git.akat.xyz/bth/bth-arch-ci:latest
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        ./gradlew --no-daemon compileKotlinLinuxX64
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: assemble
+    runInContainer: true
+    image: git.akat.xyz/bth/bth-arch-ci:latest
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        ./gradlew --no-daemon assemble
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: linuxX64Binaries
+    runInContainer: true
+    image: git.akat.xyz/bth/bth-arch-ci:latest
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        ./gradlew --no-daemon linuxX64Binaries
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: PublishArtifactStep
+    name: publish binaries
+    sourcePath: build/bin/linuxX64/
+    artifacts: '**/*'
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: build tarball
+    runInContainer: true
+    image: git.akat.xyz/bth/bth-arch-ci:latest
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: "./gradlew --no-daemon clean \nWORKDIR=$(pwd)\ncd .. \ntar --ignore-failed-read -czvf \"bth-@build_version@.tar.gz\" $WORKDIR\nmv bth-@build_version@.tar.gz $WORKDIR/bth-@build_version@.tar.gz\n"
+    runAs: 0:0
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: PublishArtifactStep
+    name: publish tarball
+    artifacts: bth-@build_version@.tar.gz
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    userMatch: anyone
+  - type: PullRequestUpdateTrigger
+  jobDependencies:
+  - jobName: gradle ci
+    requireSuccessful: true
+    artifacts: '**'
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 14400

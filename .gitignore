@@ -1,0 +1,17 @@
+.gradle/
+build/
+*.kexe
+log/
+*.tmp
+.kotlin/
+.idea/
+sqlite/
+hs_err_pid*.log
+*.pkg.tar.zst
+*-namcap.log
+*-x86_64-*.log
+bth/
+src/bth/
+pkg/
+ttmp/
+etmp/

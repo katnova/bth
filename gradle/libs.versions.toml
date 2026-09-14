@@ -1,0 +1,9 @@
+[versions]
+kotlin = "2.4.10"
+kotlinxCoroutines = "1.11.0"
+
+[libraries]
+kotlinxCoroutinesLinuxx64 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxx64", version.ref = "kotlinxCoroutines" }
+
+[plugins]
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

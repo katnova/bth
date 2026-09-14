@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# pre-commit hook: auto-increment the patch version in build.gradle.kts & PKGBUILD
+
+GRADLE_FILE="$(git rev-parse --show-toplevel)/build.gradle.kts"
+
+# PKGBUILD will always be a mirror of the build.gradle.kts version.
+PKGBUILD_FILE="$(git rev-parse --show-toplevel)/PKGBUILD"
+
+if [[ ! -f "$GRADLE_FILE" ]]; then
+    echo "pre-commit: build.gradle.kts not found, skipping version bump" >&2
+    exit 0
+fi
+
+if [[ ! -f "$PKGBUILD_FILE" ]]; then
+    echo "pre-commit: PKGBUILD not found, skipping version bump" >&2
+    exit 0
+fi
+
+current=$(grep -oP 'version\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' "$GRADLE_FILE")
+
+if [[ -z "$current" ]]; then
+    echo "pre-commit: no semver version found in build.gradle.kts, skipping bump" >&2
+    exit 0
+fi
+
+major="${current%%.*}"
+rest="${current#*.}"
+minor="${rest%%.*}"
+patch="${rest##*.}"
+
+next_patch=$((patch + 1))
+next="${major}.${minor}.${next_patch}"
+
+sed -i "s/version = \"${current}\"/version = \"${next}\"/" "$GRADLE_FILE"
+sed -i "s/^pkgver=.*/pkgver=${next}/" "$PKGBUILD_FILE"
+
+git add "$GRADLE_FILE"
+git add "$PKGBUILD_FILE"
+
+echo "pre-commit: version bumped ${current} → ${next}"

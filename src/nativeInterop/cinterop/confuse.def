@@ -1,0 +1,4 @@
+package = confuse
+headers = confuse.h
+compilerOpts.linux = -I/usr/include
+linkerOpts.linux = -L/usr/lib -L/usr/lib/x86_64-linux-gnu -lconfuse
