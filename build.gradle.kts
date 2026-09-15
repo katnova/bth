@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.akat.bth"
-version = "0.0.174"
+version = "0.0.175"
 
 val generatedVersionFile = layout.projectDirectory.file("src/nativeMain/kotlin/buildinfo/BuildInfo.kt")
 
