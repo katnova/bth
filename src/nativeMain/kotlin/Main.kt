@@ -2,17 +2,18 @@ import cli.CommandDispatcher
 import exception.BthException
 import kotlinx.cinterop.ExperimentalForeignApi
 import model.XdgDirectories
-import notcurses.exit
+import platform.posix.exit
 import setting.Settings
 import util.blockSigwinch
 import util.logError
+import kotlin.experimental.ExperimentalNativeApi
 
 /**
  * format:
  * bth <COMMAND>
  */
 
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 fun main(args: Array<String>) {
     // Block SIGWINCH process-wide as early as possible so none of our own threads can be
     // interrupted by it.
@@ -27,8 +28,7 @@ fun main(args: Array<String>) {
         logError(e.message.toString(), print = true, file = true)
         exit(e.exitCode)
     } catch (e: Throwable) {
-        logError(e.message.toString(), print = true, file = true)
+        logError("Main caught error, this might be a bug. Message: ${e.message.toString()}. Cause: ${e.cause}. Stacktrace: \n${e.stackTraceToString()}", print = true, file = true)
         exit(70)
     }
 }
-

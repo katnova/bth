@@ -1,12 +1,16 @@
 package model
 
+import exception.DirectoryFailure
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.toKString
+import platform.posix.EEXIST
 import platform.posix.S_IRGRP
 import platform.posix.S_IROTH
 import platform.posix.S_IRWXU
 import platform.posix.S_IXGRP
 import platform.posix.S_IXOTH
+import platform.posix.errno
 import platform.posix.getenv
 import platform.posix.mkdir
 
@@ -44,8 +48,18 @@ object XdgDirectories {
 
     // todo: Probably shouldn't be here
     fun ensureDirectory(path: String) {
-        mkdir(path, (S_IRWXU or S_IRGRP or S_IXGRP or S_IROTH or S_IXOTH).toUInt())
-        // todo: review: Creates with 755 permissions, ignores error if exists
+        val mode = (S_IRWXU or S_IRGRP or S_IXGRP or S_IROTH or S_IXOTH).convert<UShort>()
+        var current = if (path.startsWith("/")) "" else "."
+
+        for(part in path.split("/")) {
+            current += "/$part"
+            val result = mkdir(current, mode.convert())
+
+            if(result != 0 && errno != EEXIST) {
+                throw DirectoryFailure("Failed to create directory: $current. Error no: $errno. Exit code: $result")
+            }
+        }
+        // todo: review: Creates with 755 permissions
     }
 
     // todo: Probably shouldn't be here

@@ -76,7 +76,7 @@ bth links against three C libraries:
 | [sqlite3](https://www.sqlite.org/)                     | History database           |
 | [libconfuse](https://github.com/martinh/libconfuse)    | Configuration file parsing |
 
-The only Kotlin dependency is `kotlinx-coroutines-core-linuxx64`; everything else
+The only Kotlin dependency is `kotlinx-coroutines-core`; everything else
 is pure Kotlin/Native.
 
 **Arch Linux:**
@@ -89,6 +89,14 @@ sudo pacman -S notcurses sqlite libconfuse
 
 > Other distributions are not yet officially supported, multi-distro support is on
 > the long-term roadmap. They may or may not work. Feel free to let me know via an issue.
+
+**MacOS:**
+
+Use brew to install build deps.
+
+```sh
+brew install notcurses confuse openjdk@25
+```
 
 ---
 

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.newSingleThreadContext
 import model.KeyBind
-import notcurses.CLOCK_MONOTONIC
+import platform.posix.CLOCK_MONOTONIC
 import notcurses.NCKEY_BACKSPACE
 import notcurses.NCKEY_DEL
 import notcurses.NCKEY_DOWN
@@ -27,7 +27,7 @@ import notcurses.NCKEY_RESIZE
 import notcurses.NCKEY_RIGHT
 import notcurses.NCKEY_TAB
 import notcurses.NCKEY_UP
-import notcurses.clock_gettime
+import platform.posix.clock_gettime
 import notcurses.ncinput
 import notcurses.ncinput_alt_p
 import notcurses.ncinput_ctrl_p
@@ -37,7 +37,7 @@ import notcurses.ncinput_shift_p
 import notcurses.ncinput_super_p
 import notcurses.ncintype_e
 import notcurses.notcurses_get
-import notcurses.timespec
+import platform.posix.timespec
 import platform.posix.TIOCGWINSZ
 import platform.posix.fileno
 import platform.posix.ioctl
@@ -93,7 +93,7 @@ class InputEventFlow constructor(
                     val nowMs = pollClock.monotonicMs()
                     if (nowMs >= nextPollMs) {
                         nextPollMs = nowMs + RESIZE_POLL_INTERVAL_MS
-                        if (ioctl(ttyFd, TIOCGWINSZ.toULong(), ws.ptr) == 0 && ws.ws_row > 0u && ws.ws_col > 0u) {
+                        if (ioctl(ttyFd, TIOCGWINSZ, ws.ptr) == 0 && ws.ws_row > 0u && ws.ws_col > 0u) {
                             val rows = ws.ws_row.toUInt()
                             val cols = ws.ws_col.toUInt()
                             val current = store.state.value
@@ -177,7 +177,7 @@ class InputEventFlow constructor(
 
     /** Current CLOCK_MONOTONIC reading in milliseconds, using this [timespec] as scratch space. */
     private fun timespec.monotonicMs(): Long {
-        clock_gettime(CLOCK_MONOTONIC, this.ptr)
+        clock_gettime(CLOCK_MONOTONIC.toUInt(), this.ptr)
         return this.tv_sec * MILLIS_PER_SEC + this.tv_nsec / NANOS_PER_MILLI
     }
 
@@ -186,7 +186,7 @@ class InputEventFlow constructor(
      * as expected by `notcurses_get`.
      */
     private fun timespec.deadlineIn(nanos: Long) {
-        clock_gettime(CLOCK_MONOTONIC, this.ptr)
+        clock_gettime(CLOCK_MONOTONIC.toUInt(), this.ptr)
         var sec = this.tv_sec
         var nsec = this.tv_nsec + nanos
         if (nsec >= NANOS_PER_SEC) {

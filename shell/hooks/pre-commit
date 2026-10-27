@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
-# pre-commit hook: auto-increment the patch version in build.gradle.kts & PKGBUILD
+# pre-commit hook: auto-increment the patch version in build.gradle.kts, PKGBUILD & Formula/bth.rb
 
-GRADLE_FILE="$(git rev-parse --show-toplevel)/build.gradle.kts"
+ROOT="$(git rev-parse --show-toplevel)"
+GRADLE_FILE="$ROOT/build.gradle.kts"
 
-# PKGBUILD will always be a mirror of the build.gradle.kts version.
-PKGBUILD_FILE="$(git rev-parse --show-toplevel)/PKGBUILD"
+# PKGBUILD and the brew formula will always be a mirror of the build.gradle.kts version.
+PKGBUILD_FILE="$ROOT/PKGBUILD"
+FORMULA_FILE="$ROOT/Formula/bth.rb"
 
 if [[ ! -f "$GRADLE_FILE" ]]; then
     echo "pre-commit: build.gradle.kts not found, skipping version bump" >&2
     exit 0
 fi
 
-if [[ ! -f "$PKGBUILD_FILE" ]]; then
-    echo "pre-commit: PKGBUILD not found, skipping version bump" >&2
-    exit 0
-fi
-
-current=$(grep -oP 'version\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' "$GRADLE_FILE")
+# Portable across GNU/BSD (no grep -P, no sed -i)
+current=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' "$GRADLE_FILE")
 
 if [[ -z "$current" ]]; then
     echo "pre-commit: no semver version found in build.gradle.kts, skipping bump" >&2
@@ -31,10 +29,21 @@ patch="${rest##*.}"
 next_patch=$((patch + 1))
 next="${major}.${minor}.${next_patch}"
 
-sed -i "s/version = \"${current}\"/version = \"${next}\"/" "$GRADLE_FILE"
-sed -i "s/^pkgver=.*/pkgver=${next}/" "$PKGBUILD_FILE"
-
+perl -pi -e "s/^version = \"\Q${current}\E\"/version = \"${next}\"/" "$GRADLE_FILE"
 git add "$GRADLE_FILE"
-git add "$PKGBUILD_FILE"
+
+if [[ -f "$PKGBUILD_FILE" ]]; then
+    perl -pi -e "s/^pkgver=.*/pkgver=${next}/" "$PKGBUILD_FILE"
+    git add "$PKGBUILD_FILE"
+else
+    echo "pre-commit: PKGBUILD not found, skipping" >&2
+fi
+
+if [[ -f "$FORMULA_FILE" ]]; then
+    perl -pi -e "s/^(\s*)version \"[^\"]*\"/\1version \"${next}\"/" "$FORMULA_FILE"
+    git add "$FORMULA_FILE"
+else
+    echo "pre-commit: Formula/bth.rb not found, skipping" >&2
+fi
 
 echo "pre-commit: version bumped ${current} → ${next}"
