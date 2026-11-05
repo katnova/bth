@@ -1,6 +1,7 @@
 package view
 
 import cnames.structs.ncplane
+import kotlin.time.times
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
@@ -78,21 +79,31 @@ internal abstract class KPlane(
         }
     }
 
+    /**
+     * Move [plane] out of the drawable area.
+     */
     fun hide() {
         if (active) {
             active = false
-            ncplane_erase(plane) //todo: possibly not needed with better nc usage
-            ncplane_move_bottom(plane)
+            ncplane_move_yx(plane, ((store.state.value.realRows * 2u).toInt()), ((store.state.value.realCols * 2u).toInt()))
         }
     }
 
+    /**
+     * Move [plane] back into the drawable area.
+     */
     fun show() {
         if (!active) {
-            ncplane_move_top(plane)
+            ncplane_move_yx(plane, planeYCord, planeXCord)
             active = true
         }
     }
 
+    /**
+     * Draw conditions:
+     * - If this [KPlane] has no [activeOnPlane] set
+     * - If this [KPlane] has [activeOnPlane] set, and [TUIState.activePlane] equals [activeOnPlane]
+     */
     fun launch(): Job = store.scope.launch {
         store.state
             .takeWhile { it.isRunning }

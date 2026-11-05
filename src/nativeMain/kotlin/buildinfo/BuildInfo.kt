@@ -1,5 +1,5 @@
 package buildinfo
 
 object BuildInfo {
-    const val VERSION = "0.0.184"
+    const val VERSION = "0.0.185"
 }
