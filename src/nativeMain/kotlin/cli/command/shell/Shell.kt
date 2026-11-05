@@ -64,7 +64,7 @@ _bth_history() {
   ttmp="$(mktemp)"
   etmp="$(mktemp)"
 
-  bth tui --ttmp "$ttmp" --etmp "$etmp" --pwd "$(pwd)" --cmd "$BUFFER" </dev/tty >/dev/tty 2>/dev/tty
+  bth tui --ttmp "$ttmp" --etmp "$etmp" --pwd "$(pwd)" --cmd "$BUFFER"
 
   if [[ -s "$ttmp" ]]; then
     BUFFER="$(cat "$ttmp")"
@@ -138,7 +138,7 @@ function _bth_history
   set ttmp (mktemp)
   set etmp (mktemp)
 
-  bth tui --ttmp "$ttmp" --etmp "$etmp" --pwd (pwd) --cmd (commandline) </dev/tty >/dev/tty 2>/dev/tty
+  bth tui --ttmp "$ttmp" --etmp "$etmp" --pwd (pwd) --cmd (commandline)
 
   if test -s "$ttmp"
     commandline (cat "$ttmp")
