@@ -9,6 +9,8 @@ import model.DrawableLineBuilder
 import model.StrRGB
 import model.StyledString
 import notcurses.ncplane_erase
+import setting.SettingOption
+import setting.Settings.read
 import store.TUIState
 import store.TuiStore
 
@@ -49,13 +51,13 @@ internal class InputKPlane(
                     maxXIndex = super.planeRows.toInt(),
                 ).add(
                     StyledString(
-                        primaryStyle = StrRGB(0uL, 0uL, 0uL, 255u, 255uL, 255uL, 255uL, 255u),
+                        primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT_DIR.read(),
                         str = "${it.cwd}:"
                     )
                 )
                     .add(
                         StyledString(
-                            primaryStyle = StrRGB(0uL, 0uL, 0uL, 255u, 180uL, 180uL, 180uL, 255u),
+                            primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT.read(),
                             str = it.inputBuffer
                         )
                     )

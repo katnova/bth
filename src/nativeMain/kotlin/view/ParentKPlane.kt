@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import model.DrawableLineBuilder
 import model.FilterModes
 import model.Flag
+import model.StrRGB
 import model.StyledString
 import notcurses.ncplane_erase
 import notcurses.ncplane_putstr_yx
@@ -102,8 +103,7 @@ internal class ParentKPlane(
         uiRows: UInt,
         uiCols: UInt
     ) {
-        ncplane_set_fg_rgb8(plane, 0u, 0u, 0u)
-        ncplane_set_bg_rgb8(plane, 255u, 255u, 255u)
+        SettingOption.TUI_COLOR_COUNTS.read<StrRGB>().setAll(plane)
         ncplane_putstr_yx(
             plane,
             0,

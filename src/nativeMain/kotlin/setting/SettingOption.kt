@@ -20,7 +20,14 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
     TUI_NO_EXIT_TIME_INDICATOR("tuiNoExitTimeIndicator", String::class, ""),
     TUI_SUDO_INDICATOR("tuiSudoIndicator", String::class, "#"),
     TUI_CURSOR_INDICATOR("tuiCursorIndicator", String::class, ">"),
+    TUI_WHITESPACE_CHAR("tuiWhitespaceChar", String::class, " "),
 
+    // Row numbers
+    TUI_NUMBERS_DISTANCE("tuiNumbersDistance", optType = Int::class, 10),
+    TUI_NUMBERS_STARTING_SHADE("tuiNumbersDistanceStartingShade", optType = Int::class, 255),
+    TUI_NUMBERS_DISTANCE_SHADE_MULT("tuiNumbersDistanceShadeMult", optType = Int::class, 15),
+
+    // Colors
     TUI_COLOR_DEFAULT("tuiColor", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 0u, 0u, 0u, 255u)),
     TUI_COLOR_HIGHLIGHTED("tuiColorHighlighted", StrRGB::class, StrRGB(255u, 0u, 255u, 255u, 50u, 50u, 50u, 255u)),
     TUI_COLOR_ZERO_EXIT_CODE("tuiColorZeroExitCode", StrRGB::class, StrRGB(0u, 255u, 0u, 255u, 0u, 0u, 0u, 255u)),
@@ -37,6 +44,9 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
     TUI_COLOR_SU_MODE("tuiColorSuMode", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 255u, 0u, 0u, 255u)),
     TUI_COLOR_CP_MODE("tuiColorCpMode", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 0u, 255u, 0u, 255u)),
     TUI_COLOR_SES_MODE("tuiColorSesMode", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 191u, 64u, 191u, 255u)),
+    TUI_COLOR_FILTER_INPUT_DIR("tuiColorFilterInputDir", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255u, 255uL, 255uL, 255uL, 255u)),
+    TUI_COLOR_FILTER_INPUT("tuiColorFilterInput", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255u, 180uL, 180uL, 180uL, 255u)),
+    TUI_COLOR_COUNTS("tuiColorCounts", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255uL, 255uL, 255uL, 255uL, 255uL)),
 
     // INTERNALS
     TUI_NUM_THREADS("tuiNumThreads", Int::class, 4),
