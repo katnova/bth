@@ -25,7 +25,7 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
     TUI_COLOR_HIGHLIGHTED("tuiColorHighlighted", StrRGB::class, StrRGB(255u, 0u, 255u, 255u, 50u, 50u, 50u, 255u)),
     TUI_COLOR_ZERO_EXIT_CODE("tuiColorZeroExitCode", StrRGB::class, StrRGB(0u, 255u, 0u, 255u, 0u, 0u, 0u, 255u)),
     TUI_COLOR_NON_ZERO_EXIT_CODE("tuiColorNonZeroExitCode", StrRGB::class, StrRGB(255u, 0u, 0u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_TIME_SINCE_CMD_INVOCATION("tuiColorTimeSinceCmdInvokation", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 255u)),
+    TUI_COLOR_TIME_SINCE_CMD_INVOCATION("tuiColorTimeSinceCmdInvocation", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 255u)),
     TUI_COLOR_CMD_DURATION("tuiColorCmdDuration", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 255u)),
     TUI_COLOR_HOME_DIR_INDICATOR("tuiColorHomeDirIndicator", StrRGB::class, StrRGB(0u, 255u, 255u, 255u, 0u, 0u, 0u, 255u)),
     TUI_COLOR_SUDO_ELEVATED_BEFORE("tuiColorSudoElevatedBefore", StrRGB::class, StrRGB(255u, 255u, 0u, 255u, 0u, 0u, 0u, 255u)),
@@ -40,9 +40,10 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
 
     // INTERNALS
     TUI_NUM_THREADS("tuiNumThreads", Int::class, 4),
-    TUI_INPUT_DEBOUNCE_MS("tuiInputDebounseMs", Int::class, 5),
+    TUI_INPUT_DEBOUNCE_MS("tuiInputDebounceMs", Int::class, 5),
     LOG_FILE("logFile", String::class, "${XdgDirectories.getStatePath()}/bth.log"),
     SQLITE_DB_PATH("sqliteDbPath", String::class, "${XdgDirectories.getDataPath()}/bth.db"),
+
     // KEYBINDS
     KEYBIND_HISTORY_SCROLL_UP("HistoryScrollUp", KeyBind::class, "up"),
     KEYBIND_HISTORY_SCROLL_DOWN("HistoryScrollDown", KeyBind::class, "down"),
