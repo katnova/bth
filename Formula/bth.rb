@@ -2,7 +2,7 @@ class Bth < Formula
   desc "Better terminal history manager"
   homepage "https://git.akat.xyz/bth"
   url "https://git.akat.xyz/bth.git", branch: "master"
-  version "0.0.178"
+  version "0.0.179"
   license "BSD-3-Clause"
 
   depends_on "openjdk@25" => :build

@@ -1,15 +1,16 @@
 #!/bin/bash
 
-UNAME="$(uname -r)"
+UNAMER="$(uname -r)"
+UNAME="$(uname)"
 
-
-
-if [[ "$UNAME" == *"cachyos"* ]]; then
+if [[ "$UNAMER" == *"cachyos"* ]]; then
     curl https://git.akat.xyz/bth/~raw/master/shell/bth-install-arch.sh | bash
-elif [[ "$UNAME" == *"arch"* ]]; then
+elif [[ "$UNAMER" == *"arch"* ]]; then
     curl https://git.akat.xyz/bth/~raw/master/shell/bth-install-arch.sh | bash
-elif [[ "$UNAME" == *"manjaro"* ]]; then
+elif [[ "$UNAMER" == *"manjaro"* ]]; then
     curl https://git.akat.xyz/bth/~raw/master/shell/bth-install-arch.sh | bash
+elif [[ "$UNAME" == "Darwin" ]]; then
+    echo "MacOS detected."
 else
-    echo "Unknown or potentially supported OS: $UNAME"
+    echo "Unknown or potentially supported OS: $UNAMER"
 fi
