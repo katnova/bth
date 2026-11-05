@@ -6,6 +6,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -38,12 +39,13 @@ import notcurses.ncinput_super_p
 import notcurses.ncintype_e
 import notcurses.notcurses_get
 import platform.posix.timespec
-import platform.posix.TIOCGWINSZ
 import platform.posix.fileno
-import platform.posix.ioctl
 import platform.posix.stdout
 import platform.posix.winsize
 import setting.Settings
+import shared.deadlineIn
+import shared.ioctl
+import shared.monotonicMs
 import store.TUIAction
 import store.TuiStore
 import util.blockSigwinch
@@ -70,19 +72,19 @@ class InputEventFlow constructor(
         memScoped {
             blockSigwinch()
             val input = alloc<ncinput>()
-            val deadline = alloc<timespec>()
+
             val ttyFd = fileno(stdout)
             val ws = alloc<winsize>()
-            val pollClock = alloc<timespec>()
+            val deadline = alloc<timespec>()
             var nextPollMs = 0L
-
+            val pollClock = alloc<timespec>()
             var emittedRows = store.state.value.realRows
             var emittedCols = store.state.value.realCols
 
             emit(TUIAction.Init)
             while (store.state.value.isRunning) {
                 deadline.deadlineIn(IDLE_WAIT_NS)
-                val key = notcurses_get(nc, deadline.ptr, input.ptr)
+                val key = notcurses_get(nc, deadline.ptr.reinterpret(), input.ptr)
 
                 // 0 is a timeout, (uint32_t)-1 signals EOF/error
                 if (key == 0u) {
@@ -93,7 +95,7 @@ class InputEventFlow constructor(
                     val nowMs = pollClock.monotonicMs()
                     if (nowMs >= nextPollMs) {
                         nextPollMs = nowMs + RESIZE_POLL_INTERVAL_MS
-                        if (ioctl(ttyFd, TIOCGWINSZ, ws.ptr) == 0 && ws.ws_row > 0u && ws.ws_col > 0u) {
+                        if (ioctl(ttyFd, ws.ptr) == 0 && ws.ws_row > 0u && ws.ws_col > 0u) {
                             val rows = ws.ws_row.toUInt()
                             val cols = ws.ws_col.toUInt()
                             val current = store.state.value
@@ -175,35 +177,13 @@ class InputEventFlow constructor(
 
     private fun isSpecial(n: Int): Boolean = n in SPECIAL_NCKEYS
 
-    /** Current CLOCK_MONOTONIC reading in milliseconds, using this [timespec] as scratch space. */
-    private fun timespec.monotonicMs(): Long {
-        clock_gettime(CLOCK_MONOTONIC.toUInt(), this.ptr)
-        return this.tv_sec * MILLIS_PER_SEC + this.tv_nsec / NANOS_PER_MILLI
-    }
-
-    /**
-     * Sets this [timespec] to an absolute CLOCK_MONOTONIC deadline [nanos] from now,
-     * as expected by `notcurses_get`.
-     */
-    private fun timespec.deadlineIn(nanos: Long) {
-        clock_gettime(CLOCK_MONOTONIC.toUInt(), this.ptr)
-        var sec = this.tv_sec
-        var nsec = this.tv_nsec + nanos
-        if (nsec >= NANOS_PER_SEC) {
-            sec += (nsec / NANOS_PER_SEC)
-            nsec %= NANOS_PER_SEC
-        }
-        this.tv_sec = sec
-        this.tv_nsec = nsec
-    }
-
     companion object {
-        private const val NANOS_PER_SEC = 1_000_000_000L
-        private const val NANOS_PER_MILLI = 1_000_000L
-        private const val MILLIS_PER_SEC = 1_000L
+        const val NANOS_PER_SEC = 1_000_000_000L
+        const val NANOS_PER_MILLI = 1_000_000L
+        const val MILLIS_PER_SEC = 1_000L
 
         /** How long a single read waits before the loop re-checks [store] state. */
-        private const val IDLE_WAIT_NS = 5_000_000L
+        const val IDLE_WAIT_NS = 5_000_000L
 
         /** How often the idle tick asks the kernel for the terminal size. */
         private const val RESIZE_POLL_INTERVAL_MS = 32L

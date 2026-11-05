@@ -1,4 +1,6 @@
 package util
+
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
@@ -17,11 +19,13 @@ import platform.posix.sigset_t
  * unblocked (see [unblockSigwinch]) must restore it.
  */
 @OptIn(ExperimentalForeignApi::class)
-actual fun blockSigwinch() = memScoped {
-    val set = alloc<sigset_t>()
-    sigemptyset(set.ptr)
-    sigaddset(set.ptr, SIGWINCH)
-    pthread_sigmask(SIG_BLOCK, set.ptr, null)
+actual fun blockSigwinch() {
+    memScoped {
+        val set = alloc<sigset_t>()
+        sigemptyset(set.ptr)
+        sigaddset(set.ptr, SIGWINCH)
+        pthread_sigmask(SIG_BLOCK, set.ptr, null)
+    }
 }
 
 /**
@@ -33,9 +37,11 @@ actual fun blockSigwinch() = memScoped {
  * tty) to ever be woken by a terminal resize. Re-block with [blockSigwinch] immediately after.
  */
 @OptIn(ExperimentalForeignApi::class)
-actual fun unblockSigwinch() = memScoped {
-    val set = alloc<sigset_t>()
-    sigemptyset(set.ptr)
-    sigaddset(set.ptr, SIGWINCH)
-    pthread_sigmask(SIG_UNBLOCK, set.ptr, null)
+actual fun unblockSigwinch() {
+    memScoped {
+        val set = alloc<sigset_t>()
+        sigemptyset(set.ptr)
+        sigaddset(set.ptr, SIGWINCH)
+        pthread_sigmask(SIG_UNBLOCK, set.ptr, null)
+    }
 }

@@ -52,7 +52,7 @@ class NativeSqlite3 {
         memScoped {
             val sqlitePointer = alloc<CPointerVar<sqlite3>>()
             if (sqlite3_open(sqlitePath, sqlitePointer.ptr) != 0) {
-                throw NativeSqlite3Error("Cannot open sqlitedb: ${sqlite3_errmsg(sqlitePointer.value)}")
+                throw NativeSqlite3Error("Cannot open sqlitedb: ${sqlite3_errmsg(sqlitePointer.value)?.pointed}")
             }
             conn = sqlitePointer.value
         }
