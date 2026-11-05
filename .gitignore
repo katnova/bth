@@ -15,3 +15,4 @@ src/bth/
 pkg/
 ttmp/
 etmp/
+/gradlew.bat

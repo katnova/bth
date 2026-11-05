@@ -32,7 +32,7 @@ object XdgDirectories {
     val configHome: String = getEnvOrDefault("XDG_CONFIG_HOME", ".config")
     val dataHome: String = getEnvOrDefault("XDG_DATA_HOME", ".local/share")
     val cacheHome: String = getEnvOrDefault("XDG_CACHE_HOME", ".cache")
-    val stateHome: String = getEnvOrDefault("XDG_STATE_HOME", ".local/state")
+        val stateHome: String = getEnvOrDefault("XDG_STATE_HOME", ".local/state")
     
     fun getConfigPath(): String = "$configHome/bth"
     fun getDataPath(): String = "$dataHome/bth"
