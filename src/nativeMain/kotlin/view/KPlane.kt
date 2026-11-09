@@ -1,7 +1,6 @@
 package view
 
 import cnames.structs.ncplane
-import kotlin.time.times
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
@@ -9,7 +8,6 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
@@ -20,8 +18,6 @@ import store.TUIState
 import store.TuiStore
 import notcurses.ncplane_create
 import notcurses.ncplane_erase
-import notcurses.ncplane_move_bottom
-import notcurses.ncplane_move_top
 import notcurses.ncplane_move_yx
 import notcurses.ncplane_options
 import notcurses.ncplane_resize
@@ -50,7 +46,7 @@ internal abstract class KPlane(
     protected val keySelector: (state: TUIState) -> List<Any> = { listOf(it) },
     protected val activeOnPlane: ActivePlane? = null
 ) {
-    private var active = true
+    private var isPlaneActive = true
     protected val plane: CPointer<ncplane>
     protected val store: TuiStore
     protected val planeOpts: ncplane_options
@@ -80,26 +76,6 @@ internal abstract class KPlane(
     }
 
     /**
-     * Move [plane] out of the drawable area.
-     */
-    fun hide() {
-        if (active) {
-            active = false
-            ncplane_move_yx(plane, ((store.state.value.realRows * 2u).toInt()), ((store.state.value.realCols * 2u).toInt()))
-        }
-    }
-
-    /**
-     * Move [plane] back into the drawable area.
-     */
-    fun show() {
-        if (!active) {
-            ncplane_move_yx(plane, planeYCord, planeXCord)
-            active = true
-        }
-    }
-
-    /**
      * Draw conditions:
      * - If this [KPlane] has no [activeOnPlane] set
      * - If this [KPlane] has [activeOnPlane] set, and [TUIState.activePlane] equals [activeOnPlane]
@@ -107,21 +83,8 @@ internal abstract class KPlane(
     fun launch(): Job = store.scope.launch {
         store.state
             .takeWhile { it.isRunning }
-            .onEach {
-                /**
-                 * Check if this [KPlane]'s declared [activeOnPlane] matches [TUIState.activePlane].
-                 *
-                 * If mismatched, [hide] this plane. Else, [show] it.
-                 */
-                if (activeOnPlane != null) {
-                    if (active && activeOnPlane != it.activePlane) {
-                        hide()
-                    } else if (!active && activeOnPlane == it.activePlane) {
-                        show()
-                    }
-                }
-            }
-            .filter { (activeOnPlane == null) || (activeOnPlane == it.activePlane) } //If a plane is not [active], don't process it.
+            .onEach { syncVisibility(it) }
+            .filter { isPlaneActive }
             .onEach {
                 /**
                  * Check to see if we need to resize this [KPlane].
@@ -130,6 +93,23 @@ internal abstract class KPlane(
             }
             .distinctUntilChangedBy(keySelector)
             .draw()
+    }
+
+    /**
+     * Check if this [KPlane]'s declared [activeOnPlane] matches [TUIState.activePlane].
+     *
+     * If mismatched, hide this plane. Else, show it.
+     */
+    private fun syncVisibility(state: TUIState) {
+        if (activeOnPlane != null) {
+            if (isPlaneActive && activeOnPlane != state.activePlane) {
+                isPlaneActive = false
+                ncplane_move_yx(plane, ((store.state.value.realRows * 2u).toInt()), ((store.state.value.realCols * 2u).toInt()))
+            } else if (!isPlaneActive && activeOnPlane == state.activePlane) {
+                ncplane_move_yx(plane, planeYCord, planeXCord)
+                isPlaneActive = true
+            }
+        }
     }
 
     /**
