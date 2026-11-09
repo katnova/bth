@@ -1,6 +1,6 @@
 # Maintainer: akat <akat@akat.xyz>
 pkgname=bth
-pkgver=0.0.187
+pkgver=0.0.188
 pkgrel=1
 epoch=
 pkgdesc="Better terminal history manager"
