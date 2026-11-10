@@ -1,68 +1,57 @@
 package view
 
-import cnames.structs.ncplane
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import model.ActivePlane
 import model.DrawableLineBuilder
-import model.StrRGB
+import model.Flag
 import model.StyledString
 import notcurses.ncplane_erase
 import setting.SettingOption
 import setting.Settings.read
-import store.TUIState
-import store.TuiStore
+import model.state.QueryState
+import model.state.SliceHandle
+import model.state.InputEvent
+import util.extensions.toggle
+import util.next
+import util.previous
 
 @OptIn(ExperimentalForeignApi::class)
 internal class InputKPlane(
-    stdPlane: CPointer<ncplane>?,
-    tuiStore: TuiStore,
-    computeUiRows: (rows: UInt) -> UInt,
-    computeUiCols: (cols: UInt) -> UInt,
-    computeXCord: (rows: Int) -> Int,
-    computeYCord: (cols: Int) -> Int,
-) : KPlane(
-    stdPlane = stdPlane,
-    tuiStore = tuiStore,
-    computeUiRows = computeUiRows,
-    computeUiCols = computeUiCols,
-    computeXCord = computeXCord,
-    computeYCord = computeYCord,
-    keySelector = {
-        listOf(
-            it.inputBuffer,
-            it.cwd,
-            it.realRows,
-            it.realCols,
-            it.activePlane
-        )
-    },
-    activeOnPlane = ActivePlane.HISTORY_PLANE
-) {
+    ctx: PlaneContext,
+    layout: PlaneLayout,
+    private val query: SliceHandle<QueryState>
+) : KPlane<InputKPlane.Model>(ctx, layout, ActivePlane.HISTORY_PLANE) {
 
-    override suspend fun Flow<TUIState>.draw() {
-        this.collect {
-            submitDraw {
-                ncplane_erase(plane)
-                DrawableLineBuilder(
-                    yIndex = 0,
-                    startingXIndex = 1,
-                    maxXIndex = super.planeRows.toInt(),
-                ).add(
-                    StyledString(
-                        primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT_DIR.read(),
-                        str = "${it.cwd}:"
-                    )
-                )
-                    .add(
-                        StyledString(
-                            primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT.read(),
-                            str = it.inputBuffer
-                        )
-                    )
-                    .draw(plane)
-            }
+    data class Model(val cwd: String, val buffer: String)
+
+    override val model: Flow<Model> =
+        query.state
+            .map { Model(it.cwd, it.inputBuffer) }
+            .distinctUntilChanged()
+
+    override fun draw(model: Model, geo: Geometry) {
+        ncplane_erase(plane)
+        DrawableLineBuilder(yIndex = 0, startingXIndex = 1, maxXIndex = geo.cols.toInt())
+            .add(StyledString(primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT_DIR.read(), str = "${model.cwd}:"))
+            .add(StyledString(primaryStyle = SettingOption.TUI_COLOR_FILTER_INPUT.read(), str = model.buffer))
+            .draw(plane)
+    }
+
+    override fun onAction(action: InputEvent): Boolean {
+        when (action) {
+            is InputEvent.Char -> query.update { it.copy(inputBuffer = it.inputBuffer + action.char) }
+            InputEvent.Backspace   -> query.update { it.copy(inputBuffer = it.inputBuffer.dropLast(1)) }
+            InputEvent.Del       -> query.update { it.copy(inputBuffer = "") }
+            InputEvent.LeftArrow     -> query.update { it.copy(filterMode = it.filterMode.previous()) }
+            InputEvent.RightArrow         -> query.update { it.copy(filterMode = it.filterMode.next()) }
+            InputEvent.SudoMode               -> query.update { it.copy(flags = it.flags.toggle(Flag.SU_MODE)) }
+            InputEvent.CopyMode               -> query.update { it.copy(flags = it.flags.toggle(Flag.CP_MODE)) }
+            InputEvent.SessionMode            -> query.update { it.copy(flags = it.flags.toggle(Flag.SES_MODE)) }
+            else -> return false
         }
+        return true
     }
 }

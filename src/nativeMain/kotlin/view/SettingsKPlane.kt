@@ -1,37 +1,32 @@
 package view
 
-import cnames.structs.ncplane
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import model.ActivePlane
 import notcurses.ncplane_putstr_yx
-import store.TUIState
-import store.TuiStore
+import model.state.InputEvent
 
 @OptIn(ExperimentalForeignApi::class)
 internal class SettingsKPlane(
-    stdPlane: CPointer<ncplane>?,
-    tuiStore: TuiStore,
-    computeUiRows: (rows: UInt) -> UInt,
-    computeUiCols: (cols: UInt) -> UInt,
-    computeXCord: (rows: Int) -> Int,
-    computeYCord: (cols: Int) -> Int
-) : KPlane(
-    stdPlane = stdPlane,
-    tuiStore = tuiStore,
-    computeUiRows = computeUiRows,
-    computeUiCols = computeUiCols,
-    computeXCord = computeXCord,
-    computeYCord = computeYCord,
-    activeOnPlane = ActivePlane.SETTINGS_PLANE
-) {
+    ctx: PlaneContext,
+    layout: PlaneLayout,
+) : KPlane<Int>(ctx, layout, ActivePlane.SETTINGS_PLANE) {
 
-    override suspend fun Flow<TUIState>.draw() {
-        this.collect {
-            submitDraw {
-                submitDraw { ncplane_putstr_yx(plane, 0, 1, "Settings plane :D") }
-            }
+    private val selected = MutableStateFlow(0)
+    override val model: Flow<Int> = selected
+
+    override fun draw(model: Int, geo: Geometry) {
+        ncplane_putstr_yx(plane, 0, 1, "Settings plane :D  [selected=$model]")
+    }
+
+    override fun onAction(action: InputEvent): Boolean {
+        when (action) {
+            InputEvent.UpArrow   -> selected.update { (it - 1).coerceAtLeast(0) }
+            InputEvent.DownArrow -> selected.update { it + 1 }
+            else -> return false
         }
+        return true
     }
 }
