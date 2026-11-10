@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "xyz.akat.bth"
-version = "0.0.191"
+version = "0.0.192"
 
 val brewPrefix = providers.gradleProperty("brewPrefix")
     .orElse(providers.environmentVariable("HOMEBREW_PREFIX"))

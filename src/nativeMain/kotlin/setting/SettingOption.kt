@@ -24,20 +24,20 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
 
     // Row numbers
     TUI_NUMBERS_DISTANCE("tuiNumbersDistance", optType = Int::class, 10),
-    TUI_NUMBERS_STARTING_SHADE("tuiNumbersDistanceStartingShade", optType = Int::class, 255),
+    TUI_NUMBERS_STARTING_SHADE("tuiNumbersDistanceStartingShade", optType = Int::class, 215),
     TUI_NUMBERS_DISTANCE_SHADE_MULT("tuiNumbersDistanceShadeMult", optType = Int::class, 15),
 
     // Colors
-    TUI_COLOR_DEFAULT("tuiColor", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 0u, 0u, 0u, 255u)),
+    TUI_COLOR_DEFAULT("tuiColor", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 0u, 0u, 0u, 0u)),
     TUI_COLOR_HIGHLIGHTED("tuiColorHighlighted", StrRGB::class, StrRGB(255u, 0u, 255u, 255u, 50u, 50u, 50u, 255u)),
-    TUI_COLOR_ZERO_EXIT_CODE("tuiColorZeroExitCode", StrRGB::class, StrRGB(0u, 255u, 0u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_NON_ZERO_EXIT_CODE("tuiColorNonZeroExitCode", StrRGB::class, StrRGB(255u, 0u, 0u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_TIME_SINCE_CMD_INVOCATION("tuiColorTimeSinceCmdInvocation", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_CMD_DURATION("tuiColorCmdDuration", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_HOME_DIR_INDICATOR("tuiColorHomeDirIndicator", StrRGB::class, StrRGB(0u, 255u, 255u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_SUDO_ELEVATED_BEFORE("tuiColorSudoElevatedBefore", StrRGB::class, StrRGB(255u, 255u, 0u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_SUDO_ELEVATED("tuiColorSudoElevated", StrRGB::class, StrRGB(255u, 0u, 0u, 255u, 0u, 0u, 0u, 255u)),
-    TUI_COLOR_CMD("tuiColorCmd", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 0u, 0u, 0u, 255u)),
+    TUI_COLOR_ZERO_EXIT_CODE("tuiColorZeroExitCode", StrRGB::class, StrRGB(0u, 255u, 0u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_NON_ZERO_EXIT_CODE("tuiColorNonZeroExitCode", StrRGB::class, StrRGB(255u, 0u, 0u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_TIME_SINCE_CMD_INVOCATION("tuiColorTimeSinceCmdInvocation", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_CMD_DURATION("tuiColorCmdDuration", StrRGB::class, StrRGB(128u, 128u, 128u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_HOME_DIR_INDICATOR("tuiColorHomeDirIndicator", StrRGB::class, StrRGB(0u, 255u, 255u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_SUDO_ELEVATED_BEFORE("tuiColorSudoElevatedBefore", StrRGB::class, StrRGB(255u, 255u, 0u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_SUDO_ELEVATED("tuiColorSudoElevated", StrRGB::class, StrRGB(255u, 0u, 0u, 255u, 0u, 0u, 0u, 0u)),
+    TUI_COLOR_CMD("tuiColorCmd", StrRGB::class, StrRGB(255u, 255u, 255u, 255u, 0u, 0u, 0u, 0u)),
     TUI_COLOR_CMD_HIGHLIGHTED("tuiColorCmdHighlighted", StrRGB::class, StrRGB(255u, 0u, 255u, 255u, 50u, 50u, 50u, 255u)),
     TUI_COLOR_LOGO("tuiColorLogo", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 255u, 255u, 255u, 255u)),
     TUI_COLOR_MTD_FLAG("tuiColorMtdFlag", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 0u, 255u, 255u, 255u)),
@@ -45,7 +45,7 @@ enum class SettingOption(val optName: String, val optType: KClass<*>, val defaul
     TUI_COLOR_CP_MODE("tuiColorCpMode", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 0u, 255u, 0u, 255u)),
     TUI_COLOR_SES_MODE("tuiColorSesMode", StrRGB::class, StrRGB(0u, 0u, 0u, 255u, 191u, 64u, 191u, 255u)),
     TUI_COLOR_FILTER_INPUT_DIR("tuiColorFilterInputDir", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255u, 255uL, 255uL, 255uL, 255u)),
-    TUI_COLOR_FILTER_INPUT("tuiColorFilterInput", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255u, 180uL, 180uL, 180uL, 255u)),
+    TUI_COLOR_FILTER_INPUT("tuiColorFilterInput", StrRGB::class, StrRGB(200uL, 200uL, 200uL, 255u, 180uL, 180uL, 180uL, 0u)),
     TUI_COLOR_COUNTS("tuiColorCounts", StrRGB::class, StrRGB(0uL, 0uL, 0uL, 255uL, 255uL, 255uL, 255uL, 255uL)),
 
     // INTERNALS

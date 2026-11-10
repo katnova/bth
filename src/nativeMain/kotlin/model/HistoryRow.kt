@@ -55,13 +55,9 @@ class HistoryRow(
                     //todo: Conf for colors (more generally, but important here for shade)
                     val distance = abs(yIndex - cursorPos)
                     if (distance < SettingOption.TUI_NUMBERS_DISTANCE.read<Int>()) {
-                        val shade = (SettingOption.TUI_NUMBERS_STARTING_SHADE.read<Int>()
-                            .toUInt() - (distance * SettingOption.TUI_NUMBERS_DISTANCE_SHADE_MULT.read<Int>()).toUInt())
+                        val shade = (SettingOption.TUI_NUMBERS_STARTING_SHADE.read<Int>().toUInt() - (distance * SettingOption.TUI_NUMBERS_DISTANCE_SHADE_MULT.read<Int>()).coerceIn(0, 255).toUInt()).toULong()
                         StyledString(
-                            primaryStyle = StrRGB(
-                                RGB(shade, shade, shade), //todo: Configurable shade per R, G, and B
-                                SettingOption.TUI_COLOR_DEFAULT.read<StrRGB>().getBackground()
-                            ),
+                            primaryStyle = StrRGB(shade, shade, shade, 0u, 0u,0u,0u,0u),
                             str = distance.toString()
                         )
                     } else {
