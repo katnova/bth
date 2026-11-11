@@ -2,6 +2,7 @@ package cli.command
 
 import cli.OptSpec
 import cli.ParsedArgs
+import kotlinx.coroutines.CancellationException
 import cinterop.Tui as NcTui
 import kotlinx.coroutines.runBlocking
 
@@ -18,14 +19,16 @@ data object Tui : Command {
     override val spec = listOf(ttmp, etmp, pwd, tty, cmd)
 
     override fun execute(args: ParsedArgs) {
-        runBlocking {
-            NcTui(
-                ttmp = args.value(ttmp),
-                etmp = args.value(etmp),
-                tty = args.value(tty),
-                pwd = args.value(pwd),
-                cmd = args.value(cmd)
-            ).run()
-        }
+        try {
+            runBlocking {
+                NcTui(
+                    ttmp = args.value(ttmp),
+                    etmp = args.value(etmp),
+                    tty = args.value(tty),
+                    pwd = args.value(pwd),
+                    cmd = args.value(cmd)
+                ).run()
+            }
+        } catch (e: CancellationException) {}
     }
 }

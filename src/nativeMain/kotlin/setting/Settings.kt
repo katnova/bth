@@ -3,7 +3,7 @@ package setting
 import cinterop.Confuse
 import model.KeyBind
 import model.XdgDirectories
-import store.TUIAction
+import model.state.InputEvent
 import util.logError
 
 /**
@@ -11,7 +11,7 @@ import util.logError
  */
 object Settings {
     var settings: Map<SettingOption, Any> = mapOf()
-    lateinit var keybinds: Map<KeyBind, TUIAction>
+    lateinit var keybinds: Map<KeyBind, InputEvent>
 
     inline fun <reified T> SettingOption.read(): T {
         if(this.optType !== T::class) throw IllegalArgumentException("Cannot read ${this.name} as type ${T::class.simpleName} when it's ${this.optType.simpleName}. Consider using `.read<${this.optType.simpleName}>()`.")
@@ -30,24 +30,24 @@ object Settings {
         }
 
         keybinds = mapOf(
-            SettingOption.KEYBIND_HISTORY_SCROLL_UP.read<KeyBind>() to TUIAction.HistoryScrollUp,
-            SettingOption.KEYBIND_HISTORY_SCROLL_DOWN.read<KeyBind>() to TUIAction.HistoryScrollDown,
-            SettingOption.KEYBIND_HISTORY_PAGE_UP.read<KeyBind>() to TUIAction.HistoryPageUp,
-            SettingOption.KEYBIND_HISTORY_PAGE_DOWN.read<KeyBind>() to TUIAction.HistoryPageDown,
-            SettingOption.KEYBIND_HISTORY_EXECUTE_SELECTED.read<KeyBind>() to TUIAction.HistoryExecuteSelected,
-            SettingOption.KEYBIND_HISTORY_PASTE_SELECTED.read<KeyBind>() to TUIAction.HistoryPasteSelected,
-            SettingOption.KEYBIND_HISTORY_RESET_CURSOR.read<KeyBind>() to TUIAction.HistoryResetCursor,
-            SettingOption.KEYBIND_INPUT_BUFFER_BACKSPACE.read<KeyBind>() to TUIAction.InputBufferBackspace,
-            SettingOption.KEYBIND_INPUT_BUFFER_CLEAR.read<KeyBind>() to TUIAction.InputBufferClear,
-            SettingOption.KEYBIND_FILTER_PREVIOUS_MODE.read<KeyBind>() to TUIAction.FilterPreviousMode,
-            SettingOption.KEYBIND_FILTER_NEXT_MODE.read<KeyBind>() to TUIAction.FilterNextMode,
-            SettingOption.KEYBIND_TERMINATE.read<KeyBind>() to TUIAction.Terminate,
+            SettingOption.KEYBIND_HISTORY_SCROLL_UP.read<KeyBind>() to InputEvent.UpArrow,
+            SettingOption.KEYBIND_HISTORY_SCROLL_DOWN.read<KeyBind>() to InputEvent.DownArrow,
+            SettingOption.KEYBIND_HISTORY_PAGE_UP.read<KeyBind>() to InputEvent.PageUp,
+            SettingOption.KEYBIND_HISTORY_PAGE_DOWN.read<KeyBind>() to InputEvent.PageDown,
+            SettingOption.KEYBIND_HISTORY_EXECUTE_SELECTED.read<KeyBind>() to InputEvent.Enter,
+            SettingOption.KEYBIND_HISTORY_PASTE_SELECTED.read<KeyBind>() to InputEvent.Tab,
+            SettingOption.KEYBIND_HISTORY_RESET_CURSOR.read<KeyBind>() to InputEvent.Home,
+            SettingOption.KEYBIND_INPUT_BUFFER_BACKSPACE.read<KeyBind>() to InputEvent.Backspace,
+            SettingOption.KEYBIND_INPUT_BUFFER_CLEAR.read<KeyBind>() to InputEvent.Del,
+            SettingOption.KEYBIND_FILTER_PREVIOUS_MODE.read<KeyBind>() to InputEvent.LeftArrow,
+            SettingOption.KEYBIND_FILTER_NEXT_MODE.read<KeyBind>() to InputEvent.RightArrow,
+            SettingOption.KEYBIND_TERMINATE.read<KeyBind>() to InputEvent.Esc,
             //todo: Need to support proper parsing of config file for keybinds with modifiers
-            KeyBind('d'.code, alt = true) to TUIAction.MoveToDirectory, // alt + d
-            KeyBind('s'.code, alt = true) to TUIAction.SudoMode, // alt + s
-            KeyBind('c'.code, alt = true) to TUIAction.CopyMode, // alt + c
-            KeyBind('a'.code, alt = true) to TUIAction.SessionMode, // alt + a
-            KeyBind('x'.code, alt = true) to TUIAction.ChangeActivePlane
+            KeyBind('d'.code, alt = true) to InputEvent.MoveToDirectory, // alt + d
+            KeyBind('s'.code, alt = true) to InputEvent.SudoMode, // alt + s
+            KeyBind('c'.code, alt = true) to InputEvent.CopyMode, // alt + c
+            KeyBind('a'.code, alt = true) to InputEvent.SessionMode, // alt + a
+            KeyBind('x'.code, alt = true) to InputEvent.ChangeActivePlane
         )
     }
 }

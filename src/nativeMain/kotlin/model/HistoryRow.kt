@@ -31,7 +31,7 @@ class HistoryRow(
         val whitespace = StyledString(
             primaryStyle = SettingOption.TUI_COLOR_DEFAULT.read<StrRGB>(),
             altStyle = SettingOption.TUI_COLOR_HIGHLIGHTED.read<StrRGB>(),
-            str = " ",
+            str = SettingOption.TUI_WHITESPACE_CHAR.read<String>(),
         )
 
         val timeStart = Clock.System.now()
@@ -54,15 +54,15 @@ class HistoryRow(
                     //todo: Conf for top, bottom, or both cursor number guides
                     //todo: Conf for colors (more generally, but important here for shade)
                     val distance = abs(yIndex - cursorPos)
-                    if (distance < 10) {
-                        val shade = (255u - (distance * 15).toUInt())
+                    if (distance < SettingOption.TUI_NUMBERS_DISTANCE.read<Int>()) {
+                        val shade = (SettingOption.TUI_NUMBERS_STARTING_SHADE.read<Int>().toUInt() - (distance * SettingOption.TUI_NUMBERS_DISTANCE_SHADE_MULT.read<Int>()).coerceIn(0, 255).toUInt()).toULong()
                         StyledString(
-                            primaryStyle = StrRGB(RGB(shade, shade, shade), SettingOption.TUI_COLOR_DEFAULT.read<StrRGB>().getBackground()),
+                            primaryStyle = StrRGB(shade, shade, shade, 0u, 0u,0u,0u,0u),
                             str = distance.toString()
                         )
                     } else {
                         StyledString(
-                            str = " "
+                            str = SettingOption.TUI_WHITESPACE_CHAR.read<String>()
                         )
                     }
                 }
@@ -152,7 +152,7 @@ class HistoryRow(
                 else -> {
                     dlb.add(
                         StyledString(
-                            str = " "
+                            str = SettingOption.TUI_WHITESPACE_CHAR.read<String>()
                         )
                     )
                 }

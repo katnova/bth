@@ -1,84 +1,70 @@
 package view
 
 import buildinfo.BuildInfo
-import cnames.structs.ncplane
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import model.DrawableLineBuilder
 import model.FilterModes
 import model.Flag
+import model.StrRGB
 import model.StyledString
 import notcurses.ncplane_erase
 import notcurses.ncplane_putstr_yx
 import notcurses.ncplane_rounded_box_sized
-import notcurses.ncplane_set_bg_rgb8
-import notcurses.ncplane_set_fg_rgb8
 import setting.SettingOption
 import setting.Settings.read
-import store.TUIState
-import store.TuiStore
+import model.state.Counts
+import model.state.HistoryState
+import model.state.QueryState
+import model.state.SliceReader
 import util.extensions.assertNegativeOrThrow
 
 @OptIn(ExperimentalForeignApi::class)
 internal class ParentKPlane(
-    stdPlane: CPointer<ncplane>?,
-    tuiStore: TuiStore,
-    computeUiRows: (rows: UInt) -> UInt,
-    computeUiCols: (cols: UInt) -> UInt,
-    computeXCord: (rows: Int) -> Int,
-    computeYCord: (cols: Int) -> Int,
-) : KPlane(
-    stdPlane = stdPlane,
-    tuiStore = tuiStore,
-    computeUiRows = computeUiRows,
-    computeUiCols = computeUiCols,
-    computeXCord = computeXCord,
-    computeYCord = computeYCord,
-    keySelector = {
-        listOf(
-            it.filterMode,
-            it.totalHists,
-            it.realRows,
-            it.realCols,
-            it.activePlane,
-            it.offset,
-            it.flags,
-            it.cursorMax,
-            it.cursor
+    ctx: PlaneContext,
+    layout: PlaneLayout,
+    history: SliceReader<HistoryState>,
+    query: SliceReader<QueryState>,
+    counts: SliceReader<Counts>,
+) : KPlane<ParentKPlane.Model>(ctx, layout) {
+
+    data class Model(
+        val cursor: Int, val cursorMax: Int, val offset: Int,
+        val filterMode: FilterModes, val flags: Set<Flag>, val totalHists: Long,
+    )
+
+    override val model: Flow<Model> = combine(history.state, query.state, counts.state) { historyState, queryState, countsState ->
+        Model(historyState.cursor, historyState.cursorMax, historyState.offset, queryState.filterMode, queryState.flags, countsState.totalHists)
+    }.distinctUntilChanged()
+
+    override fun draw(model: Model, geo: Geometry) {
+        ncplane_erase(plane)
+        drawBorder()
+        drawCounts(
+            model.totalHists,
+            super.planeRows.toInt(),
+            model.offset,
+            model.cursor,
+            model.cursorMax,
+            geo.rows, //realRows
+            geo.cols //realCols
         )
-    }
-) {
-
-    override suspend fun Flow<TUIState>.draw() {
-        this.collect {
-            submitDraw {
-                ncplane_erase(plane)
-                drawBorder()
-                drawCounts(
-                    it.totalHists,
-                    super.planeRows.toInt(),
-                    it.offset,
-                    it.cursor,
-                    it.cursorMax,
-                    it.realRows,
-                    it.realCols
-                )
-                val dlb = DrawableLineBuilder(
-                    yIndex = (planeRows.toInt() - 1),
-                    startingXIndex = 1,
-                    maxXIndex = (planeCols.toInt() - 1),
-                    separation = 1
-                )
-                drawLogo(dlb)
-                drawFilterState(dlb, it.filterMode)
-                drawFlags(dlb, it.flags)
-                dlb.draw(plane)
-            }
-        }
+        val dlb = DrawableLineBuilder(
+            yIndex = (planeRows.toInt() - 1),
+            startingXIndex = 1,
+            maxXIndex = (planeCols.toInt() - 1),
+            separation = 1
+        )
+        drawLogo(dlb)
+        drawFilterState(dlb, model.filterMode)
+        drawFlags(dlb, model.flags)
+        dlb.draw(plane)
     }
 
-    private fun drawFlags(dlb: DrawableLineBuilder, flags: Array<Flag>) {
+
+    private fun drawFlags(dlb: DrawableLineBuilder, flags: Set<Flag>) {
         for (flag in flags) {
             dlb.add(flag.display)
         }
@@ -102,8 +88,7 @@ internal class ParentKPlane(
         uiRows: UInt,
         uiCols: UInt
     ) {
-        ncplane_set_fg_rgb8(plane, 0u, 0u, 0u)
-        ncplane_set_bg_rgb8(plane, 255u, 255u, 255u)
+        SettingOption.TUI_COLOR_COUNTS.read<StrRGB>().setAll(plane)
         ncplane_putstr_yx(
             plane,
             0,

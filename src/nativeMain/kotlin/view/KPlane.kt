@@ -6,65 +6,74 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import model.ActivePlane
-import store.TUIState
-import store.TuiStore
 import notcurses.ncplane_create
 import notcurses.ncplane_erase
-import notcurses.ncplane_move_bottom
-import notcurses.ncplane_move_top
 import notcurses.ncplane_move_yx
 import notcurses.ncplane_options
 import notcurses.ncplane_resize
+import model.state.SliceReader
+import model.state.InputEvent
+import model.state.TUIState
+import model.state.ViewState
 import util.extensions.assertNegativeOrThrow
+
+
+internal class PlaneContext @OptIn(ExperimentalForeignApi::class) constructor(
+    val stdPlane: CPointer<ncplane>?,
+    val scope: CoroutineScope,
+    val drawChannel: SendChannel<suspend () -> Unit>,
+    val view: SliceReader<ViewState>,
+)
+
+internal class PlaneLayout(
+    val rows: (UInt) -> UInt,
+    val cols: (UInt) -> UInt,
+    val x: (Int) -> Int,
+    val y: (Int) -> Int,
+)
+
+internal data class Geometry(val rows: UInt, val cols: UInt)
 
 /**
  * Represents an abstract plane used for drawing and managing UI elements within the TUI.
  *
  *
  * @constructor Creates a KPlane instance with the specified parameters.
- * @param stdPlane A pointer to the standard `notcurses` plane, used as the parent for this plane.
- * @param tuiStore The store that manages TUI state and provides a coroutine scope for operations.
- * @param computeUiRows A function to compute the number of rows for the UI plane based on terminal rows.
- * @param computeUiCols A function to compute the number of columns for the UI plane based on terminal columns.
- * @param computeXCord A function to calculate the X-coordinate of the plane based on terminal columns.
- * @param computeYCord A function to calculate the Y-coordinate of the plane based on terminal rows.
  */
 @OptIn(ExperimentalForeignApi::class)
-internal abstract class KPlane(
-    protected val stdPlane: CPointer<ncplane>?,
-    tuiStore: TuiStore,
-    protected val computeUiRows: (rows: UInt) -> UInt,
-    protected val computeUiCols: (cols: UInt) -> UInt,
-    protected val computeXCord: (rows: Int) -> Int,
-    protected val computeYCord: (cols: Int) -> Int,
-    protected val keySelector: (state: TUIState) -> List<Any> = { listOf(it) },
+internal abstract class KPlane<M>(
+    protected val ctx: PlaneContext,
+    private val layout: PlaneLayout,
     protected val activeOnPlane: ActivePlane? = null
 ) {
-    private var active = true
+    private var isPlaneActive = true
     protected val plane: CPointer<ncplane>
-    protected val store: TuiStore
     protected val planeOpts: ncplane_options
     protected var planeRows: UInt
     protected var planeCols: UInt
     protected var planeYCord: Int
     protected var planeXCord: Int
+    protected abstract val model: Flow<M>
+    open fun onAction(action: InputEvent): Boolean = false
+    private data class Frame<M>(val view: ViewState, val model: M)
 
     init {
         memScoped {
-            store = tuiStore
-            planeRows = computeUiRows(store.state.value.realRows)
-            planeCols = computeUiCols(store.state.value.realCols)
-            planeYCord = computeYCord(store.state.value.realRows.toInt())
-            planeXCord = computeXCord(store.state.value.realCols.toInt())
+            planeRows = layout.rows(ctx.view.value.realRows)
+            planeCols = layout.cols(ctx.view.value.realCols)
+            planeYCord = layout.y(ctx.view.value.realRows.toInt())
+            planeXCord = layout.x(ctx.view.value.realCols.toInt())
             planeOpts = alloc<ncplane_options>().apply {
                 rows = planeRows
                 cols = planeCols
@@ -73,62 +82,60 @@ internal abstract class KPlane(
                 x = planeXCord
             }
 
-            plane = ncplane_create(stdPlane, planeOpts.ptr)
+            plane = ncplane_create(ctx.stdPlane, planeOpts.ptr)
                 ?: throw IllegalStateException("Failed to create KPlane! ncplane_create returned null")
         }
     }
 
-    fun hide() {
-        if (active) {
-            active = false
-            ncplane_erase(plane) //todo: possibly not needed with better nc usage
-            ncplane_move_bottom(plane)
-        }
-    }
-
-    fun show() {
-        if (!active) {
-            ncplane_move_top(plane)
-            active = true
-        }
-    }
-
-    fun launch(): Job = store.scope.launch {
-        store.state
-            .takeWhile { it.isRunning }
-            .onEach {
-                /**
-                 * Check if this [KPlane]'s declared [activeOnPlane] matches [TUIState.activePlane].
-                 *
-                 * If mismatched, [hide] this plane. Else, [show] it.
-                 */
-                if (activeOnPlane != null) {
-                    if (active && activeOnPlane != it.activePlane) {
-                        hide()
-                    } else if (!active && activeOnPlane == it.activePlane) {
-                        show()
-                    }
-                }
-            }
-            .filter { (activeOnPlane == null) || (activeOnPlane == it.activePlane) } //If a plane is not [active], don't process it.
+    /**
+     * Draw conditions:
+     * - If this [KPlane] has no [activeOnPlane] set
+     * - If this [KPlane] has [activeOnPlane] set, and [ViewState.activePlane] equals [activeOnPlane]
+     */
+    fun launch(): Job = ctx.scope.launch {
+        combine(ctx.view.state, model) { v, m -> Frame(view = v, model = m) }
+            .takeWhile { it.view.isRunning }
+            .onEach { syncVisibility(it.view.activePlane) }
+            .filter { isPlaneActive }
             .onEach {
                 /**
                  * Check to see if we need to resize this [KPlane].
                  */
-                resizeIfNeeded(it.realRows, it.realCols)
+                resizeIfNeeded(it.view.realRows, it.view.realCols)
             }
-            .distinctUntilChangedBy(keySelector)
-            .draw()
+            .distinctUntilChanged()
+            .collect { frame ->
+                val geo = Geometry(planeRows, planeCols)
+                ctx.drawChannel.send { draw(frame.model, geo) }
+            }
+
+    }
+
+    /**
+     * Check if this [KPlane]'s declared [activeOnPlane] matches [TUIState.activePlane].
+     *
+     * If mismatched, hide this plane. Else, show it.
+     */
+    private fun syncVisibility(activePlane: ActivePlane) {
+        if (activeOnPlane != null) {
+            if (isPlaneActive && activeOnPlane != activePlane) {
+                isPlaneActive = false
+                ncplane_move_yx(plane, ((ctx.view.value.realRows * 2u).toInt()), ((ctx.view.value.realCols * 2u).toInt()))
+            } else if (!isPlaneActive && activeOnPlane == activePlane) {
+                ncplane_move_yx(plane, planeYCord, planeXCord)
+                isPlaneActive = true
+            }
+        }
     }
 
     /**
      * Resize if computed cords and dim do not match current [planeRows], [planeCols], [planeXCord], or [planeYCord]
      */
     private fun resizeIfNeeded(newTerminalRows: UInt, newTerminalCols: UInt) {
-        val newUiRows = computeUiRows(newTerminalRows)
-        val newUiCols = computeUiCols(newTerminalCols)
-        val newXCord = computeXCord(newTerminalCols.toInt())
-        val newYCord = computeYCord(newTerminalRows.toInt())
+        val newUiRows = layout.rows(newTerminalRows)
+        val newUiCols = layout.cols(newTerminalCols)
+        val newXCord = layout.x(newTerminalCols.toInt())
+        val newYCord = layout.y(newTerminalRows.toInt())
         if (newUiRows != planeRows || newUiCols != planeCols || newXCord != planeXCord || newYCord != planeYCord) {
             ncplane_erase(plane)
 
@@ -153,16 +160,8 @@ internal abstract class KPlane(
         }
     }
 
-
     /**
      * Per-plane draw logic
      */
-    protected abstract suspend fun Flow<TUIState>.draw()
-
-    /**
-     * Submits a drawing operation to the draw channel for execution.
-     *
-     * @param block The suspendable drawing operation that will be executed when consumed from the draw channel.
-     */
-    protected suspend fun submitDraw(block: suspend () -> Unit) = store.drawChannel.send(block)
+    protected abstract fun draw(model: M, geo: Geometry)
 }

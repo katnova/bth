@@ -6,6 +6,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import notcurses.ncplane_putstr_yx
 import setting.SettingOption
 import setting.Settings.read
+import util.logInfo
 
 /**
  * " " + " 0 " + "  23ms "
@@ -119,10 +120,11 @@ class DrawableLineBuilder(
             if (whitespace == null) {
                 lineCursor += separation
             }
-
-            val logOpIndex = "op[$opIndex/${ops.lastIndex}]".padEnd(10)
-            val logX = "x=$startCursor..$lineCursor".padEnd(15)
-//            logInfo("$logOpIndex y=$yIndex $logX len=${op.str.length} highlighted=$highlighted primary=${op.primaryStyle} alt=${op.altStyle} appliedFg=$fgApplied appliedBg=$bgApplied str='${op.str}'", print = false, file = true)
+//
+//            val logOpIndex = "op[$opIndex/${ops.lastIndex}]".padEnd(12)
+//            val logX = "x=$startCursor..$lineCursor".padEnd(15)
+//            val len = "len=${op.str.length}".padEnd(7)
+//            logInfo("$logOpIndex y=$yIndex $logX $len highlighted=$highlighted primary=${op.primaryStyle} alt=${op.altStyle} appliedFg=$fgApplied appliedBg=$bgApplied str='${op.str}'", print = false, file = true)
         }
 
 //        logInfo("ops done count=${ops.size} y=$yIndex x=$lineCursor", print = false, file = true)

@@ -5,7 +5,7 @@ set -o pipefail
 UNAMER="$(uname -r)"
 UNAME="$(uname)"
 
-TARGETREVISION="${REVISION:-master}"
+export TARGETREVISION="${REVISION:-master}"
 
 echo "Target revision: $TARGETREVISION"
 

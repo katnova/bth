@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.newSingleThreadContext
 import model.KeyBind
-import platform.posix.CLOCK_MONOTONIC
 import notcurses.NCKEY_BACKSPACE
 import notcurses.NCKEY_DEL
 import notcurses.NCKEY_DOWN
@@ -28,7 +27,6 @@ import notcurses.NCKEY_RESIZE
 import notcurses.NCKEY_RIGHT
 import notcurses.NCKEY_TAB
 import notcurses.NCKEY_UP
-import platform.posix.clock_gettime
 import notcurses.ncinput
 import notcurses.ncinput_alt_p
 import notcurses.ncinput_ctrl_p
@@ -46,7 +44,7 @@ import setting.Settings
 import shared.deadlineIn
 import shared.ioctl
 import shared.monotonicMs
-import store.TUIAction
+import model.state.InputEvent
 import store.TuiStore
 import util.blockSigwinch
 
@@ -68,7 +66,7 @@ class InputEventFlow constructor(
      * - notcurses_input(3)
      */
     @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-    fun flow(): Flow<TUIAction> = flow {
+    fun flow(): Flow<InputEvent> = flow {
         memScoped {
             blockSigwinch()
             val input = alloc<ncinput>()
@@ -78,11 +76,11 @@ class InputEventFlow constructor(
             val deadline = alloc<timespec>()
             var nextPollMs = 0L
             val pollClock = alloc<timespec>()
-            var emittedRows = store.state.value.realRows
-            var emittedCols = store.state.value.realCols
+            var emittedRows = store.view.value.realRows
+            var emittedCols = store.view.value.realCols
 
-            emit(TUIAction.Init)
-            while (store.state.value.isRunning) {
+            emit(InputEvent.Init)
+            while (store.view.value.isRunning) {
                 deadline.deadlineIn(IDLE_WAIT_NS)
                 val key = notcurses_get(nc, deadline.ptr.reinterpret(), input.ptr)
 
@@ -98,12 +96,12 @@ class InputEventFlow constructor(
                         if (ioctl(ttyFd, ws.ptr) == 0 && ws.ws_row > 0u && ws.ws_col > 0u) {
                             val rows = ws.ws_row.toUInt()
                             val cols = ws.ws_col.toUInt()
-                            val current = store.state.value
+                            val current = store.view.value
                             val changed = rows != current.realRows || cols != current.realCols
                             if (changed && (rows != emittedRows || cols != emittedCols)) {
                                 emittedRows = rows
                                 emittedCols = cols
-                                emit(TUIAction.Resize)
+                                emit(InputEvent.Resize)
                             }
                         }
                     }
@@ -124,7 +122,7 @@ class InputEventFlow constructor(
                     val rawKey = key.toInt()
 
                     if(rawKey == NCKEY_RESIZE) {
-                        emit(TUIAction.Resize)
+                        emit(InputEvent.Resize)
                     }
 
                     // treat LF (10) and CR (13) as NCKEY_ENTER prior to lookup
@@ -159,16 +157,16 @@ class InputEventFlow constructor(
                         if (relaxed != null) {
                             emit(relaxed)
                         } else if (rawKey in 32..0x10FF) {
-                            emit(TUIAction.InputBufferAppend(rawKey.toChar()))
+                            emit(InputEvent.Char(rawKey.toChar()))
                         } else if (normalizedKey == NCKEY_ENTER) {
                             // if Enter still didn't map, execute selected
-                            emit(TUIAction.HistoryExecuteSelected)
+                            emit(InputEvent.Enter)
                         }
                     } else if (rawKey in 32..0x10FF) {
-                        emit(TUIAction.InputBufferAppend(rawKey.toChar()))
+                        emit(InputEvent.Char(rawKey.toChar()))
                     } else if (normalizedKey == NCKEY_ENTER) {
                         // if Enter still didn't map, execute selected
-                        emit(TUIAction.HistoryExecuteSelected)
+                        emit(InputEvent.Enter)
                     }
                 }
             }

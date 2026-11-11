@@ -1,19 +1,16 @@
 import cli.CommandDispatcher
 import exception.BthException
-import kotlinx.cinterop.ExperimentalForeignApi
 import model.XdgDirectories
 import platform.posix.exit
 import setting.Settings
 import util.blockSigwinch
 import util.logError
-import kotlin.experimental.ExperimentalNativeApi
 
 /**
  * format:
  * bth <COMMAND>
  */
 
-@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 fun main(args: Array<String>) {
     // Block SIGWINCH process-wide as early as possible so none of our own threads can be
     // interrupted by it.

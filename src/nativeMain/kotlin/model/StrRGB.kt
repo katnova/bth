@@ -3,6 +3,9 @@ package model
 import cnames.structs.ncplane
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
+import notcurses.ncplane_bg_default_p
+import notcurses.ncplane_set_base
+import notcurses.ncplane_set_bg_default
 import notcurses.ncplane_set_bg_rgb8
 import notcurses.ncplane_set_fg_rgb8
 
@@ -111,7 +114,11 @@ class StrRGB {
      * @param plane Pointer to the ncplane whose background color is to be modified.
      */
     fun setBackground(plane: CPointer<ncplane>) {
-        ncplane_set_bg_rgb8(plane, this.bgR().toUInt(), this.bgG().toUInt(), this.bgB().toUInt())
+        if (this.bgA() != 0uL) {
+            ncplane_set_bg_rgb8(plane, this.bgR().toUInt(), this.bgG().toUInt(), this.bgB().toUInt())
+        } else {
+            ncplane_set_bg_default(plane)
+        }
     }
 
     /**
