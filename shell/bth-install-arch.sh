@@ -14,8 +14,13 @@ if [[ "$makepkg_config" != /* ]]; then
 fi
 
 mkdir -p "$work_dir/src" "$work_dir/build"
+target_revision=${TARGETREVISION:-master}
 curl --fail --location --silent --show-error \
-    'https://git.akat.xyz/bth/~raw?disposition=ATTACHMENT&revision=master&file=PKGBUILD' \
+    --get \
+    --data-urlencode 'disposition=ATTACHMENT' \
+    --data-urlencode "revision=$target_revision" \
+    --data-urlencode 'file=PKGBUILD' \
+    'https://git.akat.xyz/bth/~raw' \
     --output "$work_dir/PKGBUILD"
 
 printf -v quoted_makepkg_config '%q' "$makepkg_config"

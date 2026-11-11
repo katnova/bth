@@ -1,27 +1,13 @@
 #!/usr/bin/env bash
-# pre-commit hook: regenerate PKGBUILD and auto-increment the patch version in build.gradle.kts & Formula/bth.rb
+# pre-commit hook: auto-increment the patch version in build.gradle.kts
 
 ROOT="$(git rev-parse --show-toplevel)"
 GRADLE_FILE="$ROOT/build.gradle.kts"
-
-# The brew formula will always be a mirror of the build.gradle.kts version.
-FORMULA_FILE="$ROOT/Formula/bth.rb"
 
 if [[ ! -f "$GRADLE_FILE" ]]; then
     echo "pre-commit: build.gradle.kts not found, skipping version bump" >&2
     exit 0
 fi
-
-if ! (
-    unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
-    unset GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
-    cd "$ROOT" && ./gradlew --no-daemon -q generatePkgbuild
-); then
-    echo "pre-commit: ./gradlew generatePkgbuild failed; aborting commit" >&2
-    exit 1
-fi
-
-git add "$ROOT/PKGBUILD"
 
 # Portable across GNU/BSD (no grep -P, no sed -i)
 current=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' "$GRADLE_FILE")
@@ -41,12 +27,5 @@ next="${major}.${minor}.${next_patch}"
 
 perl -pi -e "s/^version = \"\Q${current}\E\"/version = \"${next}\"/" "$GRADLE_FILE"
 git add "$GRADLE_FILE"
-
-if [[ -f "$FORMULA_FILE" ]]; then
-    perl -pi -e "s/^(\s*)version \"[^\"]*\"/\1version \"${next}\"/" "$FORMULA_FILE"
-    git add "$FORMULA_FILE"
-else
-    echo "pre-commit: Formula/bth.rb not found, skipping" >&2
-fi
 
 echo "pre-commit: version bumped ${current} → ${next}"
