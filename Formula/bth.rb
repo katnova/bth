@@ -1,8 +1,8 @@
 class Bth < Formula
   desc "Better terminal history manager"
   homepage "https://git.akat.xyz/bth"
-  url "https://git.akat.xyz/bth.git", tag: "v0.0.198", revision: "fba37bd1b399c03808d1137c87ae0ada34e1fe13"
-  version "0.0.198"
+  url "https://git.akat.xyz/bth.git", tag: "v0.0.200", revision: "36552dcdb18573c6cf49e16e36d249f3720821e2"
+  version "0.0.200"
   license "BSD-3-Clause"
 
   depends_on "openjdk@25" => :build
