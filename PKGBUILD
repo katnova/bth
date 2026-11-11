@@ -1,6 +1,6 @@
 # Maintainer: akat <akat@akat.xyz>
 pkgname=bth
-pkgver=0.0.198
+pkgver=0.0.199
 pkgrel=1
 epoch=
 pkgdesc="Better Terminal History"
@@ -19,8 +19,8 @@ backup=()
 options=()
 install=
 changelog=
-source=("git+https://git.akat.xyz/$pkgname.git#tag=v0.0.198")
-sha256sums=('e0a520e695e23d9ed2364b113b2e761420ff9b7c63d6676ff216bdf49432e98f')
+source=("git+https://git.akat.xyz/$pkgname.git#tag=v0.0.199-dev")
+sha256sums=('94479eddf4b47a6ced85c65abb628b0f50404f5cbf8ede4e784aabf570817671')
 noextract=()
 
 prepare() {
