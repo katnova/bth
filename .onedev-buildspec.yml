@@ -1,7 +1,7 @@
 version: 52
 jobs:
 - name: gradle ci
-  jobExecutor: docker
+  jobExecutor: pve-docker
   steps:
   - type: CheckoutStep
     name: checkout code
@@ -70,7 +70,7 @@ jobs:
   retryDelay: 30
   timeout: 14400
 - name: gradle build
-  jobExecutor: docker
+  jobExecutor: pve-docker
   steps:
   - type: CheckoutStep
     name: checkout code

@@ -11,7 +11,7 @@ plugins {
 
 
 group = "xyz.akat.bth"
-version = "0.0.201"
+version = "0.0.202"
 description = "Better Terminal History"
 
 
