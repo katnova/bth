@@ -10,7 +10,7 @@ plugins {
 
 
 group = "xyz.akat.bth"
-version = "0.0.196"
+version = "0.0.197"
 description = "Better Terminal History"
 
 
@@ -162,7 +162,7 @@ val generatePkgbuild = tasks.register("generatePkgbuild") {
             options=()
             install=
             changelog=
-            source=("git+https://git.akat.xyz/$pkgname.git")
+            source=("git+https://git.akat.xyz/$pkgname.git#branch=${TARGETREVISION:-master}")
             noextract=()
             sha256sums=('$${gitArchiveSha256("HEAD", rootDir)}')
             validpgpkeys=('3F0A3AA96A8EFD6CFD5F67423902BCEB8BFD5E8F')
